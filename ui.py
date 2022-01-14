@@ -22,8 +22,8 @@ def shutdown():
 
 def on_exit(win: tk.Tk):
     #print('Unexpected quit')
-    win.destroy()
-    #os.system('shutdown /s /t 1')
+    #win.destroy()
+    os.system('shutdown /s /t 1')
 
 def login_window():
     root = tk.Tk()

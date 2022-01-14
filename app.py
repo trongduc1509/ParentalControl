@@ -7,7 +7,7 @@ from typing import Final
 from account import account, myTime, str_to_myTime
 from ggapis import TIME_CONFIG_ID, read_data_file
 from process import APP_TRACK_LOGIN, check_interrupted, get_location, mkapp_local_storage, note_interrupted
-from ui import error_dialog, info_dialog, login_window, shutdown, tk
+from ui import error_dialog, info_dialog, login_window, shutdown, tk, on_exit
 
 NONE: Final = -1
 
@@ -109,6 +109,7 @@ def checkTimeLeft(is_terminate: Event,user: account):
     setTextThr = Thread(target=setLabel,args=(lastTime,is_terminate,user))
     setTextThr.daemon = True
     setTextThr.start()
+    root.protocol('WM_DELETE_WINDOW', lambda: on_exit(root))
     root.mainloop()
 
 def main():
