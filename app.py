@@ -1,3 +1,4 @@
+from math import ceil
 import os
 import os.path as path
 import time
@@ -7,7 +8,7 @@ from typing import Final
 from account import account, myTime, str_to_myTime
 from ggapis import TIME_CONFIG_ID, read_data_file
 from process import APP_TRACK_LOGIN, check_interrupted, get_location, mkapp_local_storage, note_interrupted
-from ui import error_dialog, info_dialog, login_window, shutdown, tk, on_exit
+from ui import error_dialog, info_dialog, login_window, on_exit_checkTime, shutdown, tk, on_exit
 
 NONE: Final = -1
 
@@ -72,45 +73,53 @@ def checkTimeLeft(is_terminate: Event,user: account):
     timeLabel.pack()
     lastTime = datetime.now().replace(2001,1,1)
     def setLabel(lastTime: datetime,is_terminate: Event,user: account):
-        while ((user.currentTF.end.replace(2001,1,1) - datetime.now().replace(2001,1,1)).total_seconds() != 0) and not is_terminate.is_set():
-            timeLabel.config(text=f'Time left: {(datetime.utcfromtimestamp((user.currentTF.end - datetime.now().replace(2001,1,1)).total_seconds())).strftime("%H:%M:%S")}')
-
+        while ((user.currentTF.end.replace(2001,1,1) - datetime.now().replace(2001,1,1)).total_seconds() >= 0) and not is_terminate.is_set():
             currentTime = datetime.now().replace(2001,1,1)
-            dt = int((currentTime - lastTime).total_seconds()/60)
+            timeLabel.config(text=f'Time left: {(datetime.utcfromtimestamp((user.currentTF.end - currentTime).total_seconds())).strftime("%H:%M:%S")}')
+            dt = (currentTime - lastTime).total_seconds()
             lastTime = currentTime
             user.currentUsed += dt
             user.usedInTF += dt
 
             assert user.currentTF != None
             
-            
             if (user.currentTF.duration == NONE):
-                if (user.currentTF.sum - user.usedInTF) <=1:
-                    if user.userRight == 'PARENT':
-                        user = login()
-                
-                if (user.currentTF.sum < user.usedInTF):
-                    if user.userRight == 'CHILD':
-                        note_interrupted(currentTime, user)
-                    is_terminate.set()
-
+                if (user.currentTF.sum != NONE):
+                    if (user.currentTF.sum*60 - user.usedInTF) <= 60:
+                        if user.userRight == 'PARENT':
+                            user = login()
+                    
+                    if (user.currentTF.sum*60 < user.usedInTF):
+                        if user.userRight == 'CHILD':
+                            note_interrupted(currentTime, user)
+                        is_terminate.set()
+                else:
+                    if (user.currentTF.end - currentTime).total_seconds() <= 60:
+                        if user.userRight == 'PARENT':
+                            user = login()
+                    
+                    if (user.currentTF.end - currentTime).total_seconds() == 0:
+                        if user.userRight == 'CHILD':
+                            note_interrupted(currentTime, user)
+                        is_terminate.set()
             else:
-                if (user.currentTF.duration - user.currentUsed) <= 1 and user.currentTF.duration != NONE:
+                if (user.currentTF.duration*60 - user.currentUsed) <= 60:
                     if user.userRight == 'PARENT':
                         user = login()
-                if (user.currentTF.duration < user.currentUsed):
+                if (user.currentTF.duration*60 < user.currentUsed):
                     if user.userRight == 'CHILD':
                         note_interrupted(currentTime, user)
                     is_terminate.set()
 
             time.sleep(1)
-        #on_exit(root)
+        is_terminate.set()
         root.destroy()
     setTextThr = Thread(target=setLabel,args=(lastTime,is_terminate,user))
     setTextThr.daemon = True
     setTextThr.start()
-    root.protocol('WM_DELETE_WINDOW', lambda: on_exit(root))
+    root.protocol('WM_DELETE_WINDOW', lambda: on_exit_checkTime(root, is_terminate))
     root.mainloop()
+    note_interrupted(datetime.now().replace(2001,1,1), user)
 
 def main():
     user = login()
@@ -121,7 +130,10 @@ def main():
 
     if user.userRight == 'CHILD':
         sync_data_thr.start()
-    checkTimeLeft(is_terminate,user)    
+    checkTimeLeft(is_terminate,user)
+
+    if(is_terminate.is_set()):
+        shutdown()  
     
 
 if __name__ == '__main__':

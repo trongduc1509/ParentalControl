@@ -25,6 +25,9 @@ def on_exit(win: tk.Tk):
     #win.destroy()
     os.system('shutdown /s /t 1')
 
+def on_exit_checkTime(win: tk.Tk, is_terminate: Event):
+    is_terminate.set()
+
 def login_window():
     root = tk.Tk()
     tempPwd = tk.StringVar()
