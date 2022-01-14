@@ -7,7 +7,7 @@ from ggapis import SCREENSHOTS_FOLDER_ID
 
 APP_LOCATION: Final = 'parentalControl_LocalStorage'
 TEMP_IMG: Final = 'images'
-APP_TRACK_LOGIN: Final = 'secret'
+APP_TRACK_LOGIN: Final = 'secret.txt'
 
 def mkfolder(parentPath,foldername):
     folderpath = path.join(parentPath,foldername)
@@ -31,7 +31,7 @@ def mkapp_local_storage():
 def note_interrupted(timeInterrupted: datetime, user: account, beingLocked = False):
     f = open(path.join(get_location(), APP_TRACK_LOGIN),'w')
     f.write(f'{timeInterrupted.strftime("%d%m%Y_%H%M%S")}\n')
-    f.write(f'{account}\n')
+    f.write(f'{user}\n')
     f.write('LOCKED' if beingLocked else '')
 
 def check_interrupted():

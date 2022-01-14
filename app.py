@@ -7,7 +7,7 @@ from typing import Final
 from account import account, myTime, str_to_myTime
 from ggapis import TIME_CONFIG_ID, read_data_file
 from process import APP_TRACK_LOGIN, check_interrupted, get_location, mkapp_local_storage, note_interrupted
-from ui import checkTimeLeft, error_dialog, info_dialog, login_window, shutdown
+from ui import error_dialog, info_dialog, login_window, shutdown, tk
 
 NONE: Final = -1
 
@@ -50,7 +50,7 @@ def login():
                 if login_window():
                     isSave=True
                     info_dialog('Userright: Parent - logged in successfully!')
-            return account(myTime(datetime.now(),datetime.now() + timedelta(hours=1),60,NONE,NONE),'PARENT')
+            return account(myTime(datetime.now().replace(2001,1,1),datetime.now().replace(2001,1,1) + timedelta(hours=1),60,NONE,NONE),'PARENT')
         else:
             #check interrupted since last logged in as child account
             user = account(canUse, 'CHILD')
@@ -62,23 +62,59 @@ def login():
 
                 if canUse == lastUA.currentTF:
                     user = lastUA
+            return user
             
-            attempts = 3
-            while attempts != 0:
-                if login_window() == False:
-                    info_dialog('Userright: Child - logged in successfully!')
-                    return user
-                attempts = attempts - 1
-            
-            error_dialog('Device will be locked for 10 minutes')
-            note_interrupted(datetime.now(), user, True)
-            shutdown()
 
+def checkTimeLeft(is_terminate: Event,user: account):
+    root = tk.Tk()
+    root.title('C-Program')
+    timeLabel = tk.Label(root, font=('Arial Bold',16))
+    timeLabel.pack()
+    lastTime = datetime.now().replace(2001,1,1)
+    def setLabel(lastTime: datetime,is_terminate: Event,user: account):
+        while ((user.currentTF.end.replace(2001,1,1) - datetime.now().replace(2001,1,1)).total_seconds() != 0) and not is_terminate.is_set():
+            timeLabel.config(text=f'Time left: {(datetime.utcfromtimestamp((user.currentTF.end - datetime.now().replace(2001,1,1)).total_seconds())).strftime("%H:%M:%S")}')
+
+            currentTime = datetime.now().replace(2001,1,1)
+            dt = int((currentTime - lastTime).total_seconds()/60)
+            lastTime = currentTime
+            user.currentUsed += dt
+            user.usedInTF += dt
+
+            assert user.currentTF != None
+            
+            
+            if (user.currentTF.duration == NONE):
+                if (user.currentTF.sum - user.usedInTF) <=1:
+                    if user.userRight == 'PARENT':
+                        user = login()
+                
+                if (user.currentTF.sum < user.usedInTF):
+                    if user.userRight == 'CHILD':
+                        note_interrupted(currentTime, user)
+                    is_terminate.set()
+
+            else:
+                if (user.currentTF.duration - user.currentUsed) <= 1 and user.currentTF.duration != NONE:
+                    if user.userRight == 'PARENT':
+                        user = login()
+                if (user.currentTF.duration < user.currentUsed):
+                    if user.userRight == 'CHILD':
+                        note_interrupted(currentTime, user)
+                    is_terminate.set()
+
+            time.sleep(1)
+        #on_exit(root)
+        root.destroy()
+    setTextThr = Thread(target=setLabel,args=(lastTime,is_terminate,user))
+    setTextThr.daemon = True
+    setTextThr.start()
+    root.mainloop()
 
 def main():
     user = login()
     is_terminate = Event()
-    print(mkapp_local_storage())
+    mkapp_local_storage()
 
     sync_data_thr = Thread(target=update_time_use, args=(is_terminate, user))
 

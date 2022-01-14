@@ -14,6 +14,7 @@ from turtle import title
 from account import account
 
 from ggapis import ACCOUNT_DATA_ID, read_data_file
+from process import note_interrupted
 
 def shutdown():
     #sys.exit()
@@ -63,23 +64,8 @@ def check_pass(password: tk.StringVar, root: tk.Tk, isRunning: Event, isSupervis
             isRunning.set()
             if m[1] == 'PARENT':
                 isSupervisor.set()
-    root.destroy()
-
-def checkTimeLeft(is_terminate: Event,user: account):
-    root = tk.Tk()
-    root.title('C-Program')
-    timeLabel = tk.Label(root, font=('Arial Bold',16))
-    timeLabel.pack()
-    def setLabel():
-        while (user.currentTF.end - datetime.now().replace(2001,1,1)).total_seconds() != 0:
-            timeLabel.config(text=f'Time left: {(datetime.utcfromtimestamp((user.currentTF.end - datetime.now().replace(2001,1,1)).total_seconds())).strftime("%H:%M:%S")}')
-            time.sleep(1)
-        #on_exit(root)
+    if isRunning.is_set():
         root.destroy()
-    setTextThr = Thread(target= lambda: setLabel())
-    setTextThr.daemon = True
-    setTextThr.start()
-    root.mainloop()
 
 def error_dialog(err: str):
     showerror(title='Error',message=err)
@@ -88,4 +74,5 @@ def info_dialog(info: str):
     showinfo(title='Information',message=info)
 
 if __name__ == '__main__':
-    checkTimeLeft(datetime(2001,1,1,16,50,0))
+    #checkTimeLeft(datetime(2001,1,1,16,50,0))
+    print()
