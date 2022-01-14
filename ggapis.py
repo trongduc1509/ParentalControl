@@ -85,9 +85,7 @@ def upload_screenshots(service, foldername, filename, localFilePath):
         'parents': [targetFolderId]
     }
     media = MediaFileUpload(localFilePath, mimetype='image/png')
-    return service.files().create(body=screenshot_metadata,
-                                    media_body=media,
-                                    fields='id').execute()
+    return service.files().create(body=screenshot_metadata, media_body=media, fields='id').execute()
 
 def update_txt_file(service, file_id, content):
     _mimeType = 'text/plain'

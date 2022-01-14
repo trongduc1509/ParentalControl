@@ -11,16 +11,18 @@ from tkinter.constants import CENTER
 from tkinter.messagebox import showerror, showinfo
 from turtle import title
 
+from account import account
+
 from ggapis import ACCOUNT_DATA_ID, read_data_file
 
 def shutdown():
-    sys.exit()
-    #os.system('shutdown /s /t 0')
+    #sys.exit()
+    os.system('shutdown /s /t 1')
 
 def on_exit(win: tk.Tk):
     #print('Unexpected quit')
-    #win.destroy()
-    os.system('shutdown /s /t 1')
+    win.destroy()
+    #os.system('shutdown /s /t 1')
 
 def login_window():
     root = tk.Tk()
@@ -61,22 +63,20 @@ def check_pass(password: tk.StringVar, root: tk.Tk, isRunning: Event, isSupervis
             isRunning.set()
             if m[1] == 'PARENT':
                 isSupervisor.set()
-    if isRunning.is_set():
-        root.destroy()
+    root.destroy()
 
-
-def checkTimeLeft():
+def checkTimeLeft(is_terminate: Event,user: account):
     root = tk.Tk()
+    root.title('C-Program')
     timeLabel = tk.Label(root, font=('Arial Bold',16))
     timeLabel.pack()
-    def setLabel(k: int):
-        while k != 0:
-            timeLabel.config(text=f'Time left: {k}')
-            k = k-1
+    def setLabel():
+        while (user.currentTF.end - datetime.now().replace(2001,1,1)).total_seconds() != 0:
+            timeLabel.config(text=f'Time left: {(datetime.utcfromtimestamp((user.currentTF.end - datetime.now().replace(2001,1,1)).total_seconds())).strftime("%H:%M:%S")}')
             time.sleep(1)
         #on_exit(root)
         root.destroy()
-    setTextThr = Thread(target= lambda: setLabel(5))
+    setTextThr = Thread(target= lambda: setLabel())
     setTextThr.daemon = True
     setTextThr.start()
     root.mainloop()
@@ -88,4 +88,4 @@ def info_dialog(info: str):
     showinfo(title='Information',message=info)
 
 if __name__ == '__main__':
-    checkTimeLeft()
+    checkTimeLeft(datetime(2001,1,1,16,50,0))
