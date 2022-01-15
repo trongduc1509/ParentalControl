@@ -1,9 +1,12 @@
 import os
 import os.path as path
+from time import sleep
 from typing import Final
 from datetime import datetime
 from account import account, str_to_account
-from ggapis import SCREENSHOTS_FOLDER_ID
+from ggapis import SCREENSHOTS_FOLDER_ID, upload_cloud_imagefile, upload_screenshots, start_ggapi
+from threading import Event
+import pyautogui
 
 APP_LOCATION: Final = 'parentalControl_LocalStorage'
 TEMP_IMG: Final = 'images'
@@ -40,3 +43,14 @@ def check_interrupted():
     return (datetime.strptime(data[0].strip(),"%d%m%Y_%H%M%S"),
             str_to_account(data[1].strip()),
             len(data) == 3)
+
+def screenshot_and_upload(is_terminate: Event):
+    today_folder_name = datetime.now().strftime('%m%d%Y')
+    mkfolder(path.join(get_location(), TEMP_IMG), today_folder_name)
+    today_folder_location = path.join(path.join(get_location(), TEMP_IMG), today_folder_name)
+    while not is_terminate.is_set():
+        sleep(60)
+        busted = datetime.now().strftime('%m%d%Y_%H%M%S')
+        localPath = path.join(today_folder_location, f'{busted}.png')
+        pyautogui.screenshot(localPath)
+        upload_cloud_imagefile(today_folder_name,busted,localPath)

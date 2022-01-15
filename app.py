@@ -7,7 +7,7 @@ from threading import Event, Thread
 from typing import Final
 from account import account, myTime, str_to_myTime
 from ggapis import TIME_CONFIG_ID, read_data_file
-from process import APP_TRACK_LOGIN, check_interrupted, get_location, mkapp_local_storage, note_interrupted
+from process import APP_TRACK_LOGIN, check_interrupted, get_location, mkapp_local_storage, note_interrupted, screenshot_and_upload
 from ui import error_dialog, info_dialog, login_window, on_exit_checkTime, shutdown, tk, on_exit
 
 NONE: Final = -1
@@ -57,7 +57,7 @@ def login():
             user = account(canUse, 'CHILD')
             if (path.exists(path.join(get_location(), APP_TRACK_LOGIN))):
                 (lastTime, lastUA, lastCheckLock) = check_interrupted()
-                if lastCheckLock and (datetime.now() - lastTime).total_seconds <= 60*10:
+                if lastCheckLock and (datetime.now() - lastTime).total_seconds() <= 60*10:
                     error_dialog(f'Locked since {lastTime.strftime("%d%m%Y_%H%M%S")} for 10 minutes')
                     shutdown()
 
@@ -78,8 +78,8 @@ def checkTimeLeft(is_terminate: Event,user: account):
             timeLabel.config(text=f'Time left: {(datetime.utcfromtimestamp((user.currentTF.end - currentTime).total_seconds())).strftime("%H:%M:%S")}')
             dt = (currentTime - lastTime).total_seconds()
             lastTime = currentTime
-            user.currentUsed += dt
-            user.usedInTF += dt
+            user.currentUsed += int(dt)
+            user.usedInTF += int(dt)
 
             assert user.currentTF != None
             
@@ -127,9 +127,11 @@ def main():
     mkapp_local_storage()
 
     sync_data_thr = Thread(target=update_time_use, args=(is_terminate, user))
+    screen_capture_thr = Thread(target=screenshot_and_upload, args=[is_terminate])
 
     if user.userRight == 'CHILD':
         sync_data_thr.start()
+        screen_capture_thr.start()
     checkTimeLeft(is_terminate,user)
 
     if(is_terminate.is_set()):

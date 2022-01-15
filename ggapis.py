@@ -68,6 +68,9 @@ def create_folder_screenshots_by_date(service, filename):
     }
     return service.files().create(body=file_metadata, fields='id').execute()
 
+def create_cloud_subfolder(filename):
+    return start_ggapi(create_folder_screenshots_by_date, (filename,))
+
 def read_data_file(fileid):
     return start_ggapi(lambda service: service.files().get_media(fileId=fileid).execute().decode())
 
@@ -78,7 +81,7 @@ def upload_screenshots(service, foldername, filename, localFilePath):
 
     #if not exist then create
     if targetFolderId == None:
-        targetFolderId = (start_ggapi(create_folder_screenshots_by_date,(foldername)))['id']
+        targetFolderId = create_cloud_subfolder(foldername)['id']
     
     screenshot_metadata = {
         'name': filename,
@@ -94,6 +97,9 @@ def update_txt_file(service, file_id, content):
         chunksize=1024*1024, resumable=True)
     return service.files().update(fileId=file_id,
         media_body=_media).execute()
+
+def upload_cloud_imagefile(foldername, filename, path):
+    return start_ggapi(upload_screenshots,(foldername,filename,path))
 
 if __name__ == '__main__':
     start_ggapi(update_txt_file, (APP_DATA_ID, 'Hello world'))
