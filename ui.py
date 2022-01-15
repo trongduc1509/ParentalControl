@@ -6,7 +6,6 @@ from datetime import datetime
 from threading import Event, Thread
 
 import tkinter as tk
-from tkinter import Button, ttk
 from tkinter.constants import CENTER
 from tkinter.messagebox import showerror, showinfo
 from turtle import title
