@@ -1,5 +1,4 @@
 from math import ceil
-import os
 import os.path as path
 import time
 from datetime import datetime, timedelta
@@ -8,7 +7,7 @@ from typing import Final
 from account import account, myTime, str_to_myTime
 from ggapis import TIME_CONFIG_ID, read_data_file
 from process import APP_TRACK_LOGIN, check_interrupted, get_location, mkapp_local_storage, note_interrupted, screenshot_and_upload
-from ui import error_dialog, info_dialog, login_window, on_exit_checkTime, shutdown, tk, on_exit
+from ui import error_dialog, info_dialog, login_window, on_exit_checkTime, shutdown, tk
 
 NONE: Final = -1
 

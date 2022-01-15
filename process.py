@@ -4,7 +4,7 @@ from time import sleep
 from typing import Final
 from datetime import datetime
 from account import account, str_to_account
-from ggapis import SCREENSHOTS_FOLDER_ID, upload_cloud_imagefile, upload_screenshots, start_ggapi
+from ggapis import upload_cloud_imagefile
 from threading import Event
 import pyautogui
 
